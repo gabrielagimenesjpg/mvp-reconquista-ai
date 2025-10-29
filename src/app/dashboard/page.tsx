@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { coachPrompt } from "@/lib/coachPrompt";
 import { savePlanSafe } from "@/lib/savePlans";
 import { Heart, MessageCircle, Target, ArrowLeft } from "lucide-react";
@@ -9,6 +10,7 @@ export default function Dashboard() {
   const [input, setInput] = useState("");
   const [response, setResponse] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   async function handleGenerate() {
     if (!input.trim()) return alert("Conte sua situação primeiro 💬");
@@ -21,6 +23,7 @@ export default function Dashboard() {
       });
       const result = await resp.json();
       setResponse(result);
+      try { localStorage.setItem("reconquista_last_plan", JSON.stringify(result)); } catch {}
       // Se você tiver savePlanSafe ativo, mantenha:
       try { await savePlanSafe(result); } catch {}
     } catch (e) {
@@ -29,6 +32,13 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function gotoOnboarding(){
+    try { const v = localStorage.getItem("reconquista_last_plan"); if(!v) return alert("Gere seu conselho primeiro ❤️"); } catch {}
+    try { if (window.fbq) window.fbq("track","ViewContent"); } catch {}
+    try { if (window.ttq) window.ttq.track("ViewContent"); } catch {}
+    router.push("/onboarding");
   }
 
   const handleCopyMessage = () => {
@@ -147,6 +157,15 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
+
+            {response ? (
+              <button
+                onClick={gotoOnboarding}
+                className="mt-4 w-full md:w-auto rounded-xl bg-rose-600 text-white px-5 py-3 font-semibold"
+              >
+                Continuar jornada →
+              </button>
+            ) : null}
 
             <div className="text-center pt-6 border-t border-gray-200">
               <p className="text-gray-600 mb-4">
