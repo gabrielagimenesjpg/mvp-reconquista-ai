@@ -14,25 +14,15 @@ export default function Dashboard() {
     if (!input.trim()) return alert("Conte sua situação primeiro 💬");
     setLoading(true);
     try {
-      const result = await coachPrompt(input);
+      const resp = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input }),
+      });
+      const result = await resp.json();
       setResponse(result);
-      await savePlanSafe(result);
-      
-      // Notificar webhook
-      try {
-        await fetch('/api/notify', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({
-            event: 'plan_created',
-            diagnostico_curto: result.diagnostico_curto,
-            mensagem_do_dia: result.mensagem_do_dia,
-            proximos_passos: result.proximos_passos
-          })
-        });
-      } catch (e) {
-        console.log('Webhook error:', e);
-      }
+      // Se você tiver savePlanSafe ativo, mantenha:
+      try { await savePlanSafe(result); } catch {}
     } catch (e) {
       console.error(e);
       alert("Erro ao gerar conselho. Tente novamente.");
